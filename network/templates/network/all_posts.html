@@ -1,0 +1,21 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <h3>All Posts</h3>
+    {% for post in posts %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <strong>{{ post.user.username }}</strong>
+                <span class="text-muted float-right">{{ post.timestamp|date:"M d, Y H:i" }}</span>
+                <p class="mt-2 mb-0">{{ post.content }}</p>
+                <span>Likes: {{ post.likes }}</span>
+            </div>
+        </div>
+    {% empty %}
+        <p>No posts yet.</p>
+    {% endfor %}
+{% endblock %}
+
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'all_posts' %}">All Posts</a>
+</li>
