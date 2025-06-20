@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 
 from .models import User, Post
 
@@ -74,8 +75,24 @@ def register(request):
 
 
 def all_posts(request):
-    posts = Post.objects.all().order_by('-timestamp')
+    posts_list = Post.objects.all().order_by('-timestamp')
+    paginator = Paginator(posts_list, 10)  # 10 posts per page
+
+    page_number = request.GET.get('page')
+    posts = paginator.get_page(page_number)
     return render(request, "network/all_posts.html", {
+        "posts": posts
+    })
+
+
+@login_required
+def following(request):
+    following_users = request.user.following.all()
+    posts_list = Post.objects.filter(user__in=following_users).order_by('-timestamp')
+    paginator = Paginator(posts_list, 10)
+    page_number = request.GET.get('page')
+    posts = paginator.get_page(page_number)
+    return render(request, "network/following.html", {
         "posts": posts
     })
 
@@ -83,7 +100,10 @@ def all_posts(request):
 @login_required
 def profile(request, username):
     profile_user = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
+    posts_list = Post.objects.filter(user=profile_user).order_by('-timestamp')
+    paginator = Paginator(posts_list, 10)
+    page_number = request.GET.get('page')
+    posts = paginator.get_page(page_number)
     is_following = request.user in profile_user.followers.all()
     can_follow = request.user != profile_user
 
@@ -103,14 +123,3 @@ def profile(request, username):
         "can_follow": can_follow,
     }
     return render(request, "network/profile.html", context)
-
-
-@login_required
-def following(request):
-    # Get users the current user is following
-    following_users = request.user.following.all()
-    # Get posts from those users
-    posts = Post.objects.filter(user__in=following_users).order_by('-timestamp')
-    return render(request, "network/following.html", {
-        "posts": posts
-    })
