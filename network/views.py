@@ -3,12 +3,22 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
-from .models import User
+from .models import User, Post
 
 
 def index(request):
-    return render(request, "network/index.html")
+    if request.method == "POST":
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse("login"))
+        content = request.POST.get("content")
+        if content:
+            Post.objects.create(user=request.user, content=content)
+    posts = Post.objects.all().order_by("-timestamp")
+    return render(request, "network/index.html", {
+        "posts": posts
+    })
 
 
 def login_view(request):
