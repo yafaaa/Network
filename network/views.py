@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
@@ -78,3 +78,28 @@ def all_posts(request):
     return render(request, "network/all_posts.html", {
         "posts": posts
     })
+
+
+@login_required
+def profile(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(user=profile_user).order_by('-timestamp')
+    is_following = request.user in profile_user.followers.all()
+    can_follow = request.user != profile_user
+
+    if request.method == "POST" and can_follow:
+        if is_following:
+            profile_user.followers.remove(request.user)
+        else:
+            profile_user.followers.add(request.user)
+        return redirect('profile', username=username)
+
+    context = {
+        "profile_user": profile_user,
+        "posts": posts,
+        "followers_count": profile_user.followers.count(),
+        "following_count": profile_user.following.count(),
+        "is_following": is_following,
+        "can_follow": can_follow,
+    }
+    return render(request, "network/profile.html", context)
