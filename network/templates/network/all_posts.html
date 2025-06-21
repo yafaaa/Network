@@ -10,7 +10,16 @@
                 </strong>
                 <span class="text-muted float-right">{{ post.timestamp|date:"M d, Y H:i" }}</span>
                 <p class="mt-2 mb-0" id="content-{{ post.id }}">{{ post.content }}</p>
-                <span>Likes: {{ post.likes }}</span>
+                <span id="like-count-{{ post.id }}">Likes: {{ post.likes.count }}</span>
+                {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-link" onclick="toggleLike('{{ post.id }}')" id="like-btn-{{ post.id }}">
+                        {% if user in post.likes.all %}
+                            Unlike
+                        {% else %}
+                            Like
+                        {% endif %}
+                    </button>
+                {% endif %}
                 {% if user.is_authenticated and user == post.user %}
                     <button class="btn btn-sm btn-link" onclick="editPost('{{ post.id }}')">Edit</button>
                 {% endif %}
@@ -81,6 +90,23 @@
                 document.getElementById(`content-${postId}`).innerHTML = newContent;
             } else if (data.error) {
                 alert(data.error);
+            }
+        });
+    }
+
+    function toggleLike(postId) {
+        fetch(`/toggle_like/${postId}/`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.like_count !== undefined) {
+                document.getElementById(`like-count-${postId}`).innerText = `Likes: ${data.like_count}`;
+                document.getElementById(`like-btn-${postId}`).innerText = data.liked ? "Unlike" : "Like";
             }
         });
     }

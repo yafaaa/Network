@@ -145,3 +145,22 @@ def edit_post(request, post_id):
     post.content = content
     post.save()
     return JsonResponse({"message": "Post updated successfully."})
+
+
+@login_required
+@csrf_exempt
+def toggle_like(request, post_id):
+    if request.method != "PUT":
+        return JsonResponse({"error": "PUT request required."}, status=400)
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
+    user = request.user
+    if user in post.likes.all():
+        post.likes.remove(user)
+        liked = False
+    else:
+        post.likes.add(user)
+        liked = True
+    return JsonResponse({"liked": liked, "like_count": post.likes.count()})
