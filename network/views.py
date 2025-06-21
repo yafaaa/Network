@@ -1,10 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from .models import User, Post
 
@@ -123,3 +125,23 @@ def profile(request, username):
         "can_follow": can_follow,
     }
     return render(request, "network/profile.html", context)
+
+
+@login_required
+@csrf_exempt
+def edit_post(request, post_id):
+    if request.method != "PUT":
+        return JsonResponse({"error": "PUT request required."}, status=400)
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
+    if post.user != request.user:
+        return JsonResponse({"error": "Not authorized."}, status=403)
+    data = json.loads(request.body)
+    content = data.get("content", "")
+    if not content:
+        return JsonResponse({"error": "Content cannot be empty."}, status=400)
+    post.content = content
+    post.save()
+    return JsonResponse({"message": "Post updated successfully."})
