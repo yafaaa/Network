@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Django
+db.sqlite3
+*.sqlite3
+
+# VSCode
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Static files
+staticfiles/
+media/
+
+# Migrations (optional, if you want to ignore them)
+network/migrations/

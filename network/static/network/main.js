@@ -44,9 +44,100 @@ function toggleLike(postId) {
     .then(response => response.json())
     .then(data => {
         if (data.like_count !== undefined) {
-            document.getElementById(`like-count-${postId}`).innerText = `Likes: ${data.like_count}`;
-            document.getElementById(`like-btn-${postId}`).innerText = data.liked ? "Unlike" : "Like";
+            // Just show the number without "Likes:" text
+            document.getElementById(`like-count-${postId}`).innerText = data.like_count;
+            
+            // Update the heart icon based on like status
+            const likeButton = document.querySelector(`.like-button[data-post-id="${postId}"]`);
+            if (data.liked) {
+                likeButton.innerHTML = '❤️';
+            } else {
+                likeButton.innerHTML = '♡';
+            }
         }
+    });
+}
+
+function toggleCommentSection(postId) {
+    const commentSection = document.getElementById(`comment-section-${postId}`);
+    if (commentSection.style.display === 'none') {
+        commentSection.style.display = 'block';
+        loadComments(postId);
+    } else {
+        commentSection.style.display = 'none';
+    }
+}
+
+function loadComments(postId) {
+    const commentsContainer = document.getElementById(`comments-${postId}`);
+    commentsContainer.innerHTML = '<div class="text-center"><small>Loading comments...</small></div>';
+    
+    fetch(`/get_comments/${postId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            commentsContainer.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            return;
+        }
+        
+        if (data.comments.length === 0) {
+            commentsContainer.innerHTML = '<div class="text-center"><small>No comments yet</small></div>';
+            return;
+        }
+        
+        let commentsHtml = '';
+        data.comments.forEach(comment => {
+            commentsHtml += `
+                <div class="comment">
+                    <strong>${comment.username}</strong>
+                    <small class="text-muted ml-2">${comment.timestamp}</small>
+                    <p class="mb-1">${comment.content}</p>
+                </div>
+                <hr class="comment-divider">
+            `;
+        });
+        
+        commentsContainer.innerHTML = commentsHtml;
+    })
+    .catch(error => {
+        commentsContainer.innerHTML = '<div class="alert alert-danger">Failed to load comments</div>';
+        console.error('Error loading comments:', error);
+    });
+}
+
+function addComment(postId) {
+    const textarea = document.getElementById(`comment-textarea-${postId}`);
+    const content = textarea.value.trim();
+    
+    if (!content) {
+        alert('Comment cannot be empty');
+        return;
+    }
+    
+    fetch(`/add_comment/${postId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        
+        // Clear the textarea
+        textarea.value = '';
+        
+        // Reload comments to show the new one
+        loadComments(postId);
+    })
+    .catch(error => {
+        alert('Failed to add comment');
+        console.error('Error adding comment:', error);
     });
 }
 

@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from .models import User, Post
+from .models import User, Post, Comment
 
 
 def index(request):
@@ -164,3 +164,58 @@ def toggle_like(request, post_id):
         post.likes.add(user)
         liked = True
     return JsonResponse({"liked": liked, "like_count": post.likes.count()})
+
+
+@login_required
+@csrf_exempt
+def add_comment(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
+    
+    # Get comment content from request
+    data = json.loads(request.body)
+    content = data.get("content", "")
+    
+    if not content:
+        return JsonResponse({"error": "Comment cannot be empty."}, status=400)
+    
+    # Create comment
+    comment = Comment.objects.create(
+        user=request.user,
+        post=post,
+        content=content
+    )
+    
+    return JsonResponse({
+        "message": "Comment added successfully.",
+        "comment": {
+            "id": comment.id,
+            "username": comment.user.username,
+            "content": comment.content,
+            "timestamp": comment.timestamp.strftime("%B %d, %Y, %I:%M %p")
+        }
+    })
+
+def get_comments(request, post_id):
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
+    
+    comments = post.comments.all()
+    comments_data = []
+    
+    for comment in comments:
+        comments_data.append({
+            "id": comment.id,
+            "username": comment.user.username,
+            "content": comment.content,
+            "timestamp": comment.timestamp.strftime("%B %d, %Y, %I:%M %p")
+        })
+    
+    return JsonResponse({"comments": comments_data})
