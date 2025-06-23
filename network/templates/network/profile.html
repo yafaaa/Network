@@ -23,7 +23,10 @@
             <div class="card-body">
                 <span class="text-muted float-right">{{ post.timestamp|date:"M d, Y H:i" }}</span>
                 <p class="mt-2 mb-0">{{ post.content }}</p>
-                <span>Likes: {{ post.likes }}</span>
+                <span>
+                    <span style="color: #007bff;">&#128077;</span>
+                    <span id="like-count-{{ post.id }}"> {{ post.likes.count }}</span>
+                </span>
             </div>
         </div>
     {% empty %}

@@ -10,26 +10,29 @@
                 </strong>
                 <span class="text-muted float-right">{{ post.timestamp|date:"M d, Y H:i" }}</span>
                 <p class="mt-2 mb-0" id="content-{{ post.id }}">{{ post.content }}</p>
-                <span id="like-count-{{ post.id }}">Likes: {{ post.likes.count }}</span>
-                {% if user.is_authenticated %}
-                    <button class="btn btn-sm btn-link" onclick="toggleLike('{{ post.id }}')" id="like-btn-{{ post.id }}">
-                        {% if user in post.likes.all %}
-                            Unlike
-                        {% else %}
-                            Like
-                        {% endif %}
-                    </button>
-                {% endif %}
-                {% if user.is_authenticated and user == post.user %}
-                    <button class="btn btn-sm btn-link" onclick="editPost('{{ post.id }}')">Edit</button>
-                {% endif %}
+                <div class="mt-2 d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-sm btn-link p-0 align-baseline" onclick="toggleLike('{{ post.id }}')" id="like-btn-{{ post.id }}">
+                            {% if user in post.likes.all %}
+                                <span style="color: #007bff;">&#128077;</span>
+                            {% else %}
+                                <span style="color: #888;">&#128077;</span>
+                            {% endif %}
+                        </button>
+                    {% else %}
+                        <span style="color: #888;">&#128077;</span>
+                    {% endif %}
+                    <span id="like-count-{{ post.id }}" class="ml-1">{{ post.likes.count }}</span>
+                    {% if user.is_authenticated and user == post.user %}
+                        <button class="btn btn-sm btn-link ml-2" onclick="editPost('{{ post.id }}')">Edit</button>
+                    {% endif %}
+                </div>
             </div>
         </div>
     {% empty %}
         <p>No posts yet.</p>
     {% endfor %}
 
-    
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center">
         {% if posts.has_previous %}
@@ -105,8 +108,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.like_count !== undefined) {
-                document.getElementById(`like-count-${postId}`).innerText = `Likes: ${data.like_count}`;
-                document.getElementById(`like-btn-${postId}`).innerText = data.liked ? "Unlike" : "Like";
+                document.getElementById(`like-count-${postId}`).innerText = data.like_count;
+                const btn = document.getElementById(`like-btn-${postId}`);
+                if (data.liked) {
+                    btn.innerHTML = '<span style="color: #007bff;">&#128077;</span>';
+                } else {
+                    btn.innerHTML = '<span style="color: #888;">&#128077;</span>';
+                }
             }
         });
     }
