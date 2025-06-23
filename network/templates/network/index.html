@@ -24,6 +24,16 @@
                 </strong>
                 <span class="text-muted float-right">{{ post.timestamp|date:"M d, Y H:i" }}</span>
                 <p class="mt-2 mb-0">{{ post.content }}</p>
+                <button class="btn btn-sm btn-link p-0 align-baseline" onclick="toggleLike('{{ post.id }}')" id="like-btn-{{ post.id }}">
+                    {% if user.is_authenticated %}
+                        {% if user in post.likes.all %}
+                            <span style="color: #007bff;">&#128077;</span>
+                        {% else %}
+                            <span style="color: #888;">&#128077;</span>
+                        {% endif %}
+                    {% endif %}
+                </button>
+                <span id="like-count-{{ post.id }}"> {{ post.likes.count }}</span>
             </div>
         </div>
     {% empty %}
